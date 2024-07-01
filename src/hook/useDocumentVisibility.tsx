@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-
+//
 type VisibilityChangeHandler = (isVisible: boolean) => void;
 
 export function useDocumentVisibility() {

@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { useMediaQuery } from "../hook/useMediaQuery"; // Подставьте путь к вашему хуку useMediaQuery
 
 interface MediaProps {
-  orientation?: string;
+  orientation?: "landscape" | "portrait";
   minResolution?: `${number}dppx`;
   maxResolution?: `${number}dppx`;
   minWidth?: number;
@@ -13,38 +13,64 @@ interface MediaProps {
   children: ReactNode | ((matches: boolean) => ReactNode);
 }
 
-// Утилита для создания строки медиа-запроса на основе переданных свойств
-const buildMediaQueryString = (props: Partial<MediaProps>): string | null => {
-  const conditions = Object.keys(props)
-    .filter(
-      (key) =>
-        key !== "children" && props[key as keyof MediaProps] !== undefined
-    )
-    .map((key) => {
-      const value = props[key as keyof MediaProps];
-      switch (key) {
-        case "orientation":
-          return `(${key}: ${value})`;
-        case "minResolution":
-        case "maxResolution":
-          return `(${key.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${value})`;
-        default:
-          return `(${key
-            .replace(/([A-Z])/g, "-$1")
-            .toLowerCase()}: ${value}px)`;
-      }
-    });
+type MediaQueryConfig = Omit<MediaProps, "children">;
 
-  return conditions.length ? conditions.join(" and ") : null;
+// Утилита для создания строки медиа-запроса на основе переданных свойств
+const buildMediaQueryString = (props: Partial<MediaQueryConfig>): string => {
+  const toKebabCase = (str: string) =>
+    str.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+  const exhaustiveCheck = (value: never): never => {
+    throw new Error(`Unhandled case: ${value}`);
+  };
+
+  const conditions = Object.entries(props).map(([key, value]) => {
+    const mediaKey = key as keyof MediaQueryConfig;
+    switch (mediaKey) {
+      case "orientation":
+        return `(${mediaKey}: ${value})`;
+      case "minResolution":
+      case "maxResolution":
+        return `(${toKebabCase(mediaKey)}: ${value})`;
+      case "minWidth":
+        return `(min-width: ${value}px)`;
+      case "maxWidth":
+        return `(max-width: ${value}px)`;
+      case "minHeight":
+        return `(min-height: ${value}px)`;
+      case "maxHeight":
+        return `(max-height: ${value}px)`;
+      default: {
+        const n: never = mediaKey;
+        throw new Error(`Assertion failed, mediaKey = ${n}`);
+      }
+    }
+  });
+
+  return conditions.join(" and ");
 };
 
-export const MediaQuery: React.FC<Partial<MediaProps>> = (props) => {
-  const mediaQueryString = buildMediaQueryString(props);
+// Тип, который требует наличие хотя бы одного свойства из MediaProps (кроме children)
+type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
+  T,
+  Exclude<keyof T, Keys>
+> &
+  {
+    [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>;
+  }[Keys];
 
-  const matches = useMediaQuery({ query: mediaQueryString || "" });
+type MediaQueryProps = RequireAtLeastOne<Omit<MediaProps, "children">> & {
+  children: ReactNode | ((matches: boolean) => ReactNode);
+};
 
-  if (typeof props.children === "function") {
-    return <>{props.children(matches)}</>;
+export const MediaQuery: React.FC<MediaQueryProps> = ({
+  children,
+  ...props
+}) => {
+  const matches = useMediaQuery({ query: buildMediaQueryString(props) });
+
+  if (typeof children === "function") {
+    return <>{children(matches)}</>;
   }
-  return matches ? <>{props.children}</> : null;
+  return matches ? <>{children}</> : null;
 };

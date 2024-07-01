@@ -5,11 +5,18 @@ interface ParamQuery {
 }
 
 export function useMediaQuery({ query }: ParamQuery): boolean {
-  const [matches, setMatches] = useState(
-    () => window.matchMedia(query).matches
-  );
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  });
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const mediaQueryList = window.matchMedia(query);
 
     const handleChange = (event: MediaQueryListEvent) => {
