@@ -13,10 +13,6 @@ export function useMediaQuery({ query }: ParamQuery): boolean {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     const mediaQueryList = window.matchMedia(query);
 
     const handleChange = (event: MediaQueryListEvent) => {

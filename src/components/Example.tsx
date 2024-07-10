@@ -1,50 +1,24 @@
-import React from "react";
-import { ReactNode } from "react";
-import { useMediaQuery } from "../hook/useMediaQuery"; // Подставьте путь к вашему хуку useMediaQuery
+import { useMediaQuery } from "../hook/useMediaQuery";
 
-interface MediaProps {
-  orientation?: string;
-  minResolution?: `${number}dppx`;
-  maxResolution?: `${number}dppx`;
-  minWidth?: number;
-  maxWidth?: number;
-  minHeight?: number;
-  maxHeight?: number;
-  children: ReactNode | ((matches: boolean) => ReactNode);
-}
+const Example = () => {
+  const isDesktopOrLaptop = useMediaQuery({
+    query: "(min-width: 1224px)",
+  });
+  const isBigScreen = useMediaQuery({ query: "(min-width: 1824px)" });
+  const isTabletOrMobile = useMediaQuery({ query: "(max-width: 1224px)" });
+  const isPortrait = useMediaQuery({ query: "(orientation: landscape)" });
+  const isRetina = useMediaQuery({ query: "(min-resolution: 2dppx)" });
 
-// Утилита для создания строки медиа-запроса на основе переданных свойств
-const buildMediaQueryString = (props: Partial<MediaProps>): string | null => {
-  const conditions = Object.keys(props)
-    .filter(
-      (key) =>
-        key !== "children" && props[key as keyof MediaProps] !== undefined
-    )
-    .map((key) => {
-      const value = props[key as keyof MediaProps];
-      switch (key) {
-        case "orientation":
-          return `(${key}: ${value})`;
-        case "minResolution":
-        case "maxResolution":
-          return `(${key.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${value})`;
-        default:
-          return `(${key
-            .replace(/([A-Z])/g, "-$1")
-            .toLowerCase()}: ${value}px)`;
-      }
-    });
-
-  return conditions.length ? conditions.join(" and ") : null;
+  return (
+    <div>
+      <h1>Device Test!</h1>
+      {isDesktopOrLaptop && <p>You are a desktop or laptop</p>}
+      {isBigScreen && <p>You have a huge screen</p>}
+      {isTabletOrMobile && <p>You are a tablet or mobile phone</p>}
+      <p>Your are in {!isPortrait ? "portrait" : "landscape"} orientation</p>
+      {isRetina && <p>You are retina</p>}
+    </div>
+  );
 };
 
-export const MediaQuery: React.FC<Partial<MediaProps>> = (props) => {
-  const mediaQueryString = buildMediaQueryString(props);
-
-  const matches = useMediaQuery({ query: mediaQueryString || "" });
-
-  if (typeof props.children === "function") {
-    return <>{props.children(matches)}</>;
-  }
-  return matches ? <>{props.children}</> : null;
-};
+export default Example;

@@ -1,4 +1,3 @@
-import React from "react";
 import { MediaQuery } from "./MediaQuery";
 
 const SecondExample = () => (

@@ -1,6 +1,5 @@
-import React from "react";
 import { ReactNode } from "react";
-import { useMediaQuery } from "../hook/useMediaQuery"; // Подставьте путь к вашему хуку useMediaQuery
+import { useMediaQuery } from "../hook/useMediaQuery";
 
 interface MediaProps {
   orientation?: "landscape" | "portrait";
@@ -15,17 +14,9 @@ interface MediaProps {
 
 type MediaQueryConfig = Omit<MediaProps, "children">;
 
-// Утилита для создания строки медиа-запроса на основе переданных свойств
 const buildMediaQueryString = (props: MediaQueryConfig): string => {
   const toKebabCase = (str: string) =>
     str.replace(/([A-Z])/g, "-$1").toLowerCase();
-
-  const minMaxKeys = [
-    "minWidth",
-    "maxWidth",
-    "minHeight",
-    "maxHeight",
-  ] as const;
 
   const conditions = Object.entries(props).map(([key, value]) => {
     const mediaKey = key as keyof MediaQueryConfig;
@@ -35,19 +26,20 @@ const buildMediaQueryString = (props: MediaQueryConfig): string => {
       case "minResolution":
       case "maxResolution":
         return `(${toKebabCase(mediaKey)}: ${value})`;
+      case "minWidth":
+      case "maxWidth":
+      case "minHeight":
+      case "maxHeight":
+        return `(${toKebabCase(mediaKey)}: ${value}px)`;
       default:
-        if (minMaxKeys.includes(mediaKey)) {
-          return `(${toKebabCase(mediaKey)}: ${value}px)`;
-        } else {
-          throw new Error(`Assertion failed, mediaKey = ${mediaKey}`);
-        }
+        const exhaustiveCheck: never = mediaKey;
+        throw new Error(`Unhandled media key: ${exhaustiveCheck}`);
     }
   });
 
   return conditions.join(" and ");
 };
 
-// Тип, который требует наличие хотя бы одного свойства из MediaProps (кроме children)
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
   T,
   Exclude<keyof T, Keys>
